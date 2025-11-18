@@ -1,0 +1,58 @@
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+# docs: https://goreleaser.com/customization/templates/#common-fields
+
+version: 2
+
+before:
+ hooks:
+   - make ci
+
+builds:
+  - id: "secretenv"
+    binary: "secretenv"
+    main: ./cmd/secretenv
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+      - -X github.com/hakadoriya/z.go/buildinfoz.buildVersion={{.Version}}
+      - -X github.com/hakadoriya/z.go/buildinfoz.buildRevision={{.Commit}}
+      - -X github.com/hakadoriya/z.go/buildinfoz.buildBranch={{.Branch}}
+      - -X github.com/hakadoriya/z.go/buildinfoz.buildTimestamp={{.CommitDate}}
+
+archives:
+  - formats: ["tar.gz"]
+    # this name template makes the OS and Arch compatible with the results of `uname`.
+    name_template: >-
+      {{ .Binary }}_
+      {{- .Tag }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^test(\\(.*\\))?:"
+
+release:
+  # Repo in which the release will be created.
+  # Default: extracted from the origin remote URL or empty if its private hosted.
+  github:
+    owner: hakadoriya
+    name: secretenv
