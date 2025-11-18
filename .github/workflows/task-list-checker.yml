@@ -1,0 +1,23 @@
+name: task-list-checker
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - ready_for_review
+      - reopened
+      - synchronize
+
+jobs:
+  task-list-checker:
+    if: github.actor != 'dependabot[bot]' && github.actor != 'renovate[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: hakadoriya-actions/task-list-checker@v0.0.2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}

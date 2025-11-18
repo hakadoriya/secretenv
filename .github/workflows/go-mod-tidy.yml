@@ -1,0 +1,138 @@
+name: go-mod-tidy
+#     ^^^^^^^^^^^
+# https://github.com/organization/repository/workflows/go-mod-tidy/badge.svg
+#                                                      ^^^^^^^^^^^
+
+on:
+  push:
+    branches:
+      - main
+    # NO paths filter
+  pull_request:
+    # NO paths filter
+  workflow_dispatch:
+
+# NOTE: If commit & push continuously, cancel the workflow other than the latest commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.base_ref }}-${{ github.head_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  WORKDIR: .
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  paths-filter:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.paths-filter.outputs.skip }}
+    steps:
+      - uses: hakadoriya-actions/paths-filter-alternative@v1.0.1
+        id: paths-filter
+        with:
+          paths: |-
+            # If any of these regular expressions match, it returns skip=false
+            # This setting takes precedence over paths-ignore
+            ^.github/workflows/go-test.yml$
+            ^.*go\.[a-z\.]+$
+            ^.*\.go$
+  # > Note: A job that is skipped will report its status as "Success".
+  # > It will not prevent a pull request from merging, even if it is a required check.
+  # ref. https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution#overview
+  go-mod-tidy: # NOTE: for Branch protection rule `Status checks that are required.`
+    needs: paths-filter
+    if: needs.paths-filter.outputs.skip != 'true' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }} # needed for gh pr view
+      - name: DEBUG
+        shell: bash
+        run: |
+          cat <<'DEBUG_DOC'
+          == DEBUG =======================================================
+          github.ref: ${{ github.ref }}
+          github.event_name: ${{ github.event_name }}
+          -- toJSON(github.event.inputs) ---------------------------------
+          ${{ toJSON(github.event.inputs) }}
+          -- toJSON(github) ----------------------------------------------
+          ${{ toJSON(github) }}
+          ================================================================
+          DEBUG_DOC
+      - name: actions/cache for versenv
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/versenv
+          key: versenv-${{ runner.os }}-${{ hashFiles('**/.versenv.env') }}
+          restore-keys: |
+            versenv-${{ runner.os }}-
+      - name: Add GITHUB_PATH, GITHUB_ENV
+        shell: bash
+        run: |
+          # Update GITHUB_PATH
+          cat <<GITHUB_PATH >> $GITHUB_PATH
+          ${PWD}/.local/bin
+          ${PWD}/${{ env.WORKDIR }}/.local/bin
+          ${PWD}/.bin
+          GITHUB_PATH
+          # Update GITHUB_ENV
+          grep -Ev '^\s*$|^\s*#' .versenv.env >> $GITHUB_ENV
+      - name: Setup versenv
+        shell: bash
+        run: |
+          # Setup versenv
+          direnv allow ${{ env.WORKDIR }}
+          make versenv
+      - uses: actions/setup-go@v5 # ref. https://github.com/actions/setup-go#usage
+        id: setup-go
+        with:
+          cache: false
+          go-version-file: ${{ env.WORKDIR }}/go.mod
+      - name: Get Golang info
+        id: golang-info
+        shell: bash
+        run: |
+          echo "GOVERSION=$(go version | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+      - name: actions/cache for go
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+          # ${{ steps.golang-info.outputs.GOCACHE }} # NOTE: There are cases where build artifacts before modification are cached and cannot be resolved, so they are excluded from caching.
+          key: ${{ runner.os }}-go-${{ steps.golang-info.outputs.GOVERSION }}-${{ hashFiles('**/go.sum') }}-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ steps.golang-info.outputs.GOVERSION }}-${{ hashFiles('**/go.sum') }}-
+            ${{ runner.os }}-go-${{ steps.golang-info.outputs.GOVERSION }}-
+            ${{ runner.os }}-go-
+      - name: Run go mod tidy
+        if: ${{ steps.setup-go.outputs.cache-hit != 'true' }}
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          # GITHUB_TOKEN: ${{ secrets.GH_BOT_TOKEN }}
+        working-directory: ${{ env.WORKDIR }}
+        shell: bash
+        run: |
+          direnv exec . go-mod-all tidy
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          DIFF_FILES=$(git diff --name-only)
+          if [ -z "${DIFF_FILES-}" ]; then
+            echo "No changes to the output on this push; exiting."
+            exit 0
+          fi
+          echo "${DIFF_FILES:?}" | grep -E "go\.(mod|sum)" | xargs -t git add
+          git commit -m "build: go mod tidy (by github-actions[bot])"
+          git push

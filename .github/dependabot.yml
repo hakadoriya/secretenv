@@ -1,0 +1,38 @@
+version: 2
+updates:
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+      timezone: "Asia/Tokyo"
+    commit-message:
+      prefix: "ci(github-actions): "
+    labels:
+      - "ci"
+    assignees:
+      - "hakadoriya/owner"
+    groups:
+      dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+      timezone: "Asia/Tokyo"
+    commit-message:
+      prefix: "build(go): "
+    labels:
+      - "build"
+    assignees:
+      - "hakadoriya/owner"
+    groups:
+      dependencies:
+        patterns:
+          - "*"

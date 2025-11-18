@@ -1,0 +1,156 @@
+name: go-test
+#     ^^^^^^^
+# https://github.com/organization/repository/workflows/go-test/badge.svg
+#                                                      ^^^^^^^
+
+on:
+  push:
+    branches:
+      - main
+    # NO paths filter
+  pull_request:
+    # NO paths filter
+  workflow_dispatch:
+
+# NOTE: If commit & push continuously, cancel the workflow other than the latest commit.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.base_ref }}-${{ github.head_ref }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  DOCKER_BUILD_CACHE_FROM: /tmp/.docker-build-buildx-cache-from
+  DOCKER_BUILD_CACHE_TO: /tmp/.docker-build-buildx-cache-to
+  WORKDIR: .
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  paths-filter:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.paths-filter.outputs.skip }}
+    steps:
+      - uses: hakadoriya-actions/paths-filter-alternative@v1.0.1
+        id: paths-filter
+        with:
+          paths: |-
+            # If any of these regular expressions match, it returns skip=false
+            # This setting takes precedence over paths-ignore
+            ^.github/workflows/go-test.yml$
+            ^.*go\.[a-z\.]+$
+            ^.*\.go$
+  # > Note: A job that is skipped will report its status as "Success".
+  # > It will not prevent a pull request from merging, even if it is a required check.
+  # ref. https://docs.github.com/en/actions/using-jobs/using-conditions-to-control-job-execution#overview
+  go-test:
+    needs: paths-filter
+    if: ${{ needs.paths-filter.outputs.skip != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: DEBUG
+        shell: bash
+        run: |
+          cat <<'DEBUG_DOC'
+          == DEBUG =======================================================
+          github.ref: ${{ github.ref }}
+          github.event_name: ${{ github.event_name }}
+          -- toJSON(github.event.inputs) ---------------------------------
+          ${{ toJSON(github.event.inputs) }}
+          -- toJSON(github) ----------------------------------------------
+          ${{ toJSON(github) }}
+          ================================================================
+          DEBUG_DOC
+      - name: actions/cache for versenv
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/versenv
+          key: versenv-${{ runner.os }}-${{ hashFiles('**/.versenv.env') }}
+          restore-keys: |
+            versenv-${{ runner.os }}-
+      - name: Add GITHUB_PATH, GITHUB_ENV
+        run: |
+          # Update GITHUB_PATH
+          cat <<GITHUB_PATH >> $GITHUB_PATH
+          ${PWD}/.local/bin
+          ${PWD}/${{ env.WORKDIR }}/.local/bin
+          ${PWD}/.bin
+          GITHUB_PATH
+          # Update GITHUB_ENV
+          grep -Ev '^\s*$|^\s*#' .versenv.env >> $GITHUB_ENV
+      - name: Setup versenv
+        run: |
+          # Setup versenv
+          direnv allow ${{ env.WORKDIR }}
+          make versenv
+      # NOTE: enable docker compose layer cache ->
+      - name: Set up Buildx for docker build cache
+        uses: docker/setup-buildx-action@v3
+      - name: Use docker build cache
+        uses: actions/cache/restore@v4
+        id: restore-cache
+        with:
+          path: ${{ env.DOCKER_BUILD_CACHE_FROM }}
+          key: docker-build-buildx-${{ github.sha }}
+          restore-keys: |
+            docker-build-buildx-
+      # NOTE: enable docker compose layer cache <-
+      - uses: actions/setup-go@v5 # ref. https://github.com/actions/setup-go#usage
+        id: setup-go
+        with:
+          cache: false
+          go-version-file: ${{ env.WORKDIR }}/go.mod
+      - name: Get Golang info
+        id: golang-info
+        shell: bash
+        run: |
+          echo "GOVERSION=$(go version | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
+          echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
+      - name: actions/cache for go
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+          # ${{ steps.golang-info.outputs.GOCACHE }} # NOTE: There are cases where build artifacts before modification are cached and cannot be resolved, so they are excluded from caching.
+          key: ${{ runner.os }}-go-${{ steps.golang-info.outputs.GOVERSION }}-${{ hashFiles('**/go.sum') }}-${{ hashFiles('**/*.go') }}
+          restore-keys: |
+            ${{ runner.os }}-go-${{ steps.golang-info.outputs.GOVERSION }}-${{ hashFiles('**/go.sum') }}-
+            ${{ runner.os }}-go-${{ steps.golang-info.outputs.GOVERSION }}-
+            ${{ runner.os }}-go-
+      - name: Run go test
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          # for docker build cache
+          GHA_CACHE_OPTS: --cache-from type=local,src=${{ env.DOCKER_BUILD_CACHE_FROM }} --cache-to type=local,dest=${{ env.DOCKER_BUILD_CACHE_TO }},mode=max
+        working-directory: ${{ env.WORKDIR }}
+        shell: bash
+        run: |
+          set -Eeu -o pipefail -x
+          direnv allow .
+          direnv exec . make setup
+          #direnv exec . make up # NOTE: This is not necessary for testing in this repository.
+          direnv exec . make test
+      - uses: codecov/codecov-action@v5 # ref. https://github.com/codecov/codecov-action#example-workflowyml-with-codecov-action
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ${{ env.WORKDIR }}/coverage.txt
+      - name: Move docker build cache (workaround)
+        if: always()
+        shell: bash
+        run: |
+          if [[ -d ${{ env.DOCKER_BUILD_CACHE_TO }} ]]; then
+            rm -rf ${{ env.DOCKER_BUILD_CACHE_FROM }}
+            mv ${{ env.DOCKER_BUILD_CACHE_TO }} ${{ env.DOCKER_BUILD_CACHE_FROM }}
+          fi
+      - uses: actions/cache/save@v4
+        if: always() # NOTE: Save cache even if the previous job fails
+        with:
+          path: ${{ env.DOCKER_BUILD_CACHE_FROM }}
+          key: ${{ steps.restore-cache.outputs.cache-primary-key }}
