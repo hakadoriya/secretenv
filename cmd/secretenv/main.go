@@ -5,7 +5,8 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/hakadoriya/secretenv/internal/contexts"
 	"github.com/hakadoriya/secretenv/internal/entrypoint/secretenv"
@@ -16,7 +17,7 @@ func main() {
 }
 
 func Main(ctx context.Context) int {
-	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, unix.SIGTERM)
 	defer stop()
 
 	l := slog.New(slog.NewTextHandler(os.Stderr, nil))
