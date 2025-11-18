@@ -16,9 +16,12 @@ import (
 )
 
 const (
-	optProvider = "provider"
-	optSecret   = "secret"
-	optVersion  = "version"
+	optProvider      = "provider"
+	envProvider      = "SECRETENV_PROVIDER"
+	optSecret        = "secret"
+	envSecret        = "SECRETENV_SECRET"
+	optSecretVersion = "secret-version"
+	envSecretVersion = "SECRETENV_SECRET_VERSION"
 )
 
 // Entrypoint is the entrypoint for the secretenv command.
@@ -33,18 +36,21 @@ func Entrypoint(ctx context.Context, args []string) error {
 			//nolint:exhaustruct
 			&cliz.StringOption{
 				Name:        optProvider,
+				Env:         envProvider,
 				Description: "The provider to use",
 				Required:    true,
 			},
 			//nolint:exhaustruct
 			&cliz.StringOption{
 				Name:        optSecret,
+				Env:         envSecret,
 				Description: "The secret name contains the .env file",
 				Required:    true,
 			},
 			//nolint:exhaustruct
 			&cliz.StringOption{
-				Name:        optVersion,
+				Name:        optSecretVersion,
+				Env:         envSecretVersion,
 				Description: "The secret version to use",
 			},
 		},
@@ -59,12 +65,12 @@ func Entrypoint(ctx context.Context, args []string) error {
 			}
 
 			var opts []infra.GetSecretStringValueOption
-			version, err := cmd.GetOptionString(optVersion)
+			secretVersion, err := cmd.GetOptionString(optSecretVersion)
 			if err != nil {
 				return fmt.Errorf("cmd.GetOptionString: %w", err)
 			}
-			if version != "" {
-				opts = append(opts, infra.WithGetSecretStringValueOptionVersion(version))
+			if secretVersion != "" {
+				opts = append(opts, infra.WithGetSecretStringValueOptionVersion(secretVersion))
 			}
 
 			// 1st argument is the command name, so skip it
