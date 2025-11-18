@@ -11,7 +11,7 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-      - uses: hakadoriya-actions/final-newline-checker@v0.0.2
+      - uses: hakadoriya-actions/final-newline-checker@v0.0.3
         id: final-newline-checker
         with:
           # NOTE: If you want to fail on missing final newline, set this to true
