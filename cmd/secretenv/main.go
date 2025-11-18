@@ -19,7 +19,7 @@ func Main(ctx context.Context) int {
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	l := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	l := slog.New(slog.NewTextHandler(os.Stderr, nil))
 	ctx = contexts.WithLogger(ctx, l)
 
 	if err := secretenv.Entrypoint(ctx, os.Args); err != nil {
