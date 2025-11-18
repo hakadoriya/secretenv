@@ -53,7 +53,7 @@ jobs:
     if: ${{ needs.paths-filter.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: DEBUG
         shell: bash
         run: |
@@ -102,7 +102,7 @@ jobs:
           restore-keys: |
             docker-build-buildx-
       # NOTE: enable docker compose layer cache <-
-      - uses: actions/setup-go@v5 # ref. https://github.com/actions/setup-go#usage
+      - uses: actions/setup-go@v6 # ref. https://github.com/actions/setup-go#usage
         id: setup-go
         with:
           cache: false
