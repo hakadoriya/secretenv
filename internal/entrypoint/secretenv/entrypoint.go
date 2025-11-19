@@ -39,14 +39,12 @@ func Entrypoint(ctx context.Context, osArgs []string) error {
 				Name:        optProvider,
 				Env:         envProvider,
 				Description: "The provider to use",
-				Required:    true,
 			},
 			//nolint:exhaustruct
 			&cliz.StringOption{
 				Name:        optSecret,
 				Env:         envSecret,
 				Description: "The secret name contains the .env file",
-				Required:    true,
 			},
 			//nolint:exhaustruct
 			&cliz.StringOption{
@@ -85,9 +83,15 @@ func execFunc(e executor.Executor) func(cmd *cliz.Command, args []string) error 
 		if err != nil {
 			return fmt.Errorf("cmd.GetOptionString: %w", err)
 		}
+		if provider == "" {
+			return fmt.Errorf("option: --%s: %w", optProvider, cliz.ErrOptionRequired)
+		}
 		secret, err := cmd.GetOptionString(optSecret)
 		if err != nil {
 			return fmt.Errorf("cmd.GetOptionString: %w", err)
+		}
+		if secret == "" {
+			return fmt.Errorf(" --%s: %w", optSecret, cliz.ErrOptionRequired)
 		}
 
 		var opts []infra.GetSecretStringValueOption
