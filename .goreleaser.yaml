@@ -27,7 +27,7 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/hakadoriya/z.go/buildinfoz.buildVersion={{.Version}}
+      - -X github.com/hakadoriya/z.go/buildinfoz.buildVersion={{.Tag}}
       - -X github.com/hakadoriya/z.go/buildinfoz.buildRevision={{.Commit}}
       - -X github.com/hakadoriya/z.go/buildinfoz.buildBranch={{.Branch}}
       - -X github.com/hakadoriya/z.go/buildinfoz.buildTimestamp={{.CommitDate}}
