@@ -22,6 +22,10 @@ linters:
     - wsl # ignore "declarations should never be cuddled"
     - wsl_v5 # unnecessary
   settings:
+    revive:
+      rules:
+        - name: empty-block
+          disabled: true
     wrapcheck:
       ignore-sigs:
         - func errors.New(text string) error

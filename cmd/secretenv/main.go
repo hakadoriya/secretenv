@@ -6,9 +6,10 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/hakadoriya/z.go/logz/slogz"
+
 	"github.com/hakadoriya/secretenv/internal/entrypoint/secretenv"
 	"github.com/hakadoriya/secretenv/internal/infra/executor"
-	"github.com/hakadoriya/z.go/logz/slogz"
 )
 
 func main() {

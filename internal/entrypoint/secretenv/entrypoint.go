@@ -59,7 +59,7 @@ func Entrypoint(ctx context.Context, osArgs []string) error {
 			{
 				Name:        "version",
 				Description: "Print the version of secretenv",
-				ExecFunc: func(c *cliz.Command, args []string) error {
+				ExecFunc: func(c *cliz.Command, _ []string) error {
 					if err := buildinfoz.Fprint(c.Stdout()); err != nil {
 						return fmt.Errorf("buildinfoz.Fprint: %w", err)
 					}
@@ -67,7 +67,7 @@ func Entrypoint(ctx context.Context, osArgs []string) error {
 				},
 			},
 		},
-		ExecFunc: execFunc(executor.NewExecutor()),
+		ExecFunc: execFunc(executor.NewExecutor()), //nolint:contextcheck
 	}
 
 	if err := c.Exec(ctx, osArgs); err != nil {

@@ -7,6 +7,7 @@ import (
 
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	"cloud.google.com/go/secretmanager/apiv1/secretmanagerpb"
+
 	"github.com/hakadoriya/secretenv/internal/infra"
 	"github.com/hakadoriya/secretenv/internal/infra/internal"
 )
@@ -56,5 +57,5 @@ func (c *client) GetSecretStringValue(ctx context.Context, key string, opts ...i
 		return "", fmt.Errorf("c.client.AccessSecretVersion: %w", err)
 	}
 
-	return string(out.Payload.Data), nil
+	return string(out.GetPayload().GetData()), nil
 }

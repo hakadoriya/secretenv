@@ -13,8 +13,7 @@ type Executor interface {
 	Exec(argv0 string, argv []string, envv []string) error
 }
 
-type executor struct {
-}
+type executor struct{}
 
 func NewExecutor() Executor {
 	return &executor{}
@@ -26,5 +25,9 @@ func (e *executor) Exec(argv0 string, argv []string, envv []string) error {
 		return fmt.Errorf("exec.LookPath: %w", err)
 	}
 
-	return unix.Exec(execPath, argv, envv)
+	if err := unix.Exec(execPath, argv, envv); err != nil {
+		return fmt.Errorf("unix.Exec: %w", err)
+	}
+
+	return nil
 }
