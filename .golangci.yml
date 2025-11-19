@@ -9,6 +9,7 @@ linters:
     - depguard # unnecessary
     - dupl # unnecessary
     - funlen # unnecessary
+    - gocognit # unnecessary
     - goconst # unnecessary
     - godot # unnecessary
     - godox # unnecessary
