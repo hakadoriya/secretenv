@@ -6,25 +6,24 @@ import (
 	"os"
 	"os/signal"
 
-	"golang.org/x/sys/unix"
-
-	"github.com/hakadoriya/secretenv/internal/contexts"
 	"github.com/hakadoriya/secretenv/internal/entrypoint/secretenv"
+	"github.com/hakadoriya/secretenv/internal/infra/executor"
+	"github.com/hakadoriya/z.go/logz/slogz"
 )
 
 func main() {
-	os.Exit(Main(context.Background()))
+	os.Exit(Main())
 }
 
-func Main(ctx context.Context) int {
-	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, unix.SIGTERM)
+func Main() int {
+	ctx, stop := signal.NotifyContext(context.Background(), executor.Signals...)
 	defer stop()
 
 	l := slog.New(slog.NewTextHandler(os.Stderr, nil))
-	ctx = contexts.WithLogger(ctx, l)
+	ctx = slogz.WithContext(ctx, l)
 
 	if err := secretenv.Entrypoint(ctx, os.Args); err != nil {
-		l.Error("secretenv failed", "error", err)
+		l.Error("secretenv failed", slogz.Error(err))
 		return 1
 	}
 

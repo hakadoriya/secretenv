@@ -1,6 +1,6 @@
 # secretenv
 
-A command-line tool that fetches secrets from secret management services (such as AWS Secrets Manager) and executes commands with those secrets as environment variables.
+A command-line tool that fetches secrets from secret management services (such as Google Cloud Secret Manager, AWS Secrets Manager) and executes commands with those secrets as environment variables.
 
 ## Overview
 
@@ -18,7 +18,7 @@ This enables secure secret management following the [12 Factor App](https://12fa
 ### Using Go install
 
 ```bash
-go install github.com/hakadoriya/secretenv/cmd/secretenv@latest
+CGO_ENABLED=0 go install github.com/hakadoriya/secretenv/cmd/secretenv@latest
 ```
 
 ### Download Binary
@@ -91,24 +91,17 @@ CMD ["./myapp"]
 - AWS credentials configured (via environment variables, IAM role, or AWS credentials file)
 - Appropriate IAM permissions to access Secrets Manager
 
-**Required IAM Permissions:**
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "secretsmanager:GetSecretValue"
-      ],
-      "Resource": "arn:aws:secretsmanager:region:account-id:secret:secret-name"
-    }
-  ]
-}
-```
-
 **Default Version:**
 - If `--secret-version` is not specified, `AWSCURRENT` is used
+
+### `gcloud` provider: Google Cloud Secret Manager
+
+**Prerequisites:**
+- Google Cloud SDK installed and authenticated or using service account credentials
+- Appropriate IAM permissions to access Secret Manager
+
+**Default Version:**
+- If `--secret-version` is not specified, `latest` is used
 
 ## .env File Format
 
