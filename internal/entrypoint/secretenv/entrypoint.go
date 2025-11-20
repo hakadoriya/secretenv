@@ -33,6 +33,7 @@ func Entrypoint(ctx context.Context, osArgs []string) error {
 	c := cliz.Command{
 		Name:        "secretenv",
 		Description: "A command-line tool that fetches secrets from secret management services (such as Google Cloud Secret Manager, AWS Secrets Manager) and executes commands with those secrets as environment variables",
+		Usage:       "secretenv [options] -- <command> [args...]",
 		Options: []cliz.Option{
 			//nolint:exhaustruct
 			&cliz.StringOption{

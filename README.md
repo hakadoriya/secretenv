@@ -23,7 +23,15 @@ CGO_ENABLED=0 go install github.com/hakadoriya/secretenv/cmd/secretenv@latest
 
 ### Download Binary
 
-Download the latest binary from the [Releases](https://github.com/hakadoriya/secretenv/releases) page.
+Run the following command to install the latest binary to `/usr/local/bin`.
+
+```sh
+INSTALL_DIR=/usr/local/bin
+VERSION=$(curl -w '%header{location}' -o /dev/null -RSs https://github.com/hakadoriya/secretenv/releases/latest | grep -o "[^/]*$")
+curl -LR https://github.com/hakadoriya/secretenv/releases/download/${VERSION}/secretenv_${VERSION}_$(uname -s)_$(uname -m).tar.gz | (cd ${INSTALL_DIR} && sudo tar -xf - secretenv)
+```
+
+Alternatively, download the latest binary from the [Releases](https://github.com/hakadoriya/secretenv/releases) page.
 
 ## Usage
 
