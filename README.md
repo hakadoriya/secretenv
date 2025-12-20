@@ -135,7 +135,7 @@ secretenv --provider gcloud --secret my-app-secrets -- ./myapp
 **Example:**
 ```bash
 export OP_SERVICE_ACCOUNT_TOKEN=****
-secretenv --provider 1password --secret my-app-secrets -- ./myapp
+secretenv --provider 1password --secret "op://vault/item/field" -- ./myapp
 ```
 
 ### `shell` provider: Shell
@@ -148,7 +148,7 @@ secretenv --provider 1password --secret my-app-secrets -- ./myapp
 
 **Example:**
 ```bash
-secretenv --provider shell --secret "cat .env" -- ./myapp
+secretenv --provider shell --secret "op read op://vault/item/field" -- ./myapp
 ```
 
 ## .env File Format
