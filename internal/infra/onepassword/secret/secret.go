@@ -51,7 +51,7 @@ var _ infra.Client = (*client)(nil)
 // It retrieves the service account token from the OP_SERVICE_ACCOUNT_TOKEN environment variable.
 func New(ctx context.Context, opts ...Option) (infra.Client, error) {
 	c := &client{
-		serviceAccountToken: os.Getenv(ServiceAccountTokenEnvKey),
+		serviceAccountToken: "",
 		client:              nil,
 	}
 	for _, opt := range opts {
@@ -59,7 +59,10 @@ func New(ctx context.Context, opts ...Option) (infra.Client, error) {
 	}
 
 	if c.serviceAccountToken == "" {
-		return nil, fmt.Errorf("env=%s: %w", ServiceAccountTokenEnvKey, errors.ErrEnvVarNotSet)
+		c.serviceAccountToken = os.Getenv(ServiceAccountTokenEnvKey)
+		if c.serviceAccountToken == "" {
+			return nil, fmt.Errorf("env=%s: %w", ServiceAccountTokenEnvKey, errors.ErrEnvVarNotSet)
+		}
 	}
 
 	var err error
