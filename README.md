@@ -102,6 +102,12 @@ CMD ["./myapp"]
 **Default Version:**
 - If `--secret-version` is not specified, `AWSCURRENT` is used
 
+**Example:**
+```bash
+aws login
+secretenv --provider aws --secret my-app-secrets -- ./myapp
+```
+
 ### `gcloud` provider: Google Cloud Secret Manager
 
 **Prerequisites:**
@@ -110,6 +116,40 @@ CMD ["./myapp"]
 
 **Default Version:**
 - If `--secret-version` is not specified, `latest` is used
+
+**Example:**
+```bash
+gcloud auth application-default login
+secretenv --provider gcloud --secret my-app-secrets -- ./myapp
+```
+
+### `1password` provider: 1Password
+
+**Prerequisites:**
+- 1Password Service Account Token
+- Environment variable `OP_SERVICE_ACCOUNT_TOKEN` is set
+
+**Default Version:**
+- 1Password does not have a version concept, so the `--secret-version` option is ignored.
+
+**Example:**
+```bash
+export OP_SERVICE_ACCOUNT_TOKEN=****
+secretenv --provider 1password --secret my-app-secrets -- ./myapp
+```
+
+### `shell` provider: Shell
+
+**Prerequisites:**
+- Shell command to execute
+
+**Default Version:**
+- Shell does not have a version concept, so the `--secret-version` option is ignored.
+
+**Example:**
+```bash
+secretenv --provider shell --secret "cat .env" -- ./myapp
+```
 
 ## .env File Format
 
