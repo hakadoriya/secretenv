@@ -148,7 +148,7 @@ secretenv --provider 1password --secret "op://vault/item/field" -- ./myapp
 
 **Example:**
 ```bash
-secretenv --provider shell --secret "cat .env" -- ./myapp
+secretenv --provider shell --secret "op read op://vault/item/field" -- ./myapp
 ```
 
 ## .env File Format
