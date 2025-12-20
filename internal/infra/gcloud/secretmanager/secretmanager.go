@@ -14,19 +14,37 @@ import (
 
 const DefaultVersion = "latest"
 
-type client struct {
-	client *secretmanager.Client
-}
+type (
+	client struct {
+		client *secretmanager.Client
+	}
+	Option interface {
+		apply(c *client)
+	}
+	//nolint:unused
+	optionFunc func(c *client)
+)
+
+//nolint:unused
+func (f optionFunc) apply(c *client) { f(c) }
 
 var _ infra.Client = (*client)(nil)
 
-func New(ctx context.Context) (infra.Client, error) {
-	c, err := secretmanager.NewClient(ctx)
+func New(ctx context.Context, opts ...Option) (infra.Client, error) {
+	c := &client{
+		client: nil,
+	}
+	for _, opt := range opts {
+		opt.apply(c)
+	}
+
+	var err error
+	c.client, err = secretmanager.NewClient(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("secretmanager.NewClient: %w", err)
 	}
 
-	return &client{client: c}, nil
+	return c, nil
 }
 
 func (c *client) GetSecretStringValue(ctx context.Context, key string, opts ...infra.GetSecretStringValueOption) (value string, err error) {
