@@ -1,8 +1,11 @@
 package stdout
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
 
 	"github.com/hakadoriya/secretenv/internal/infra"
@@ -63,10 +66,13 @@ func (c *client) GetSecretStringValue(ctx context.Context, key string, opts ...i
 
 	//nolint:gosec // shell command input is main concept of this provider
 	cmd := exec.CommandContext(ctx, shellArgs[0], shellArgs[1:]...)
-	output, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("cmd.Output: %w", err)
+	cmd.Stdin = os.Stdin
+	stdoutBuf := bytes.NewBuffer(nil)
+	cmd.Stdout = io.MultiWriter(os.Stdout, stdoutBuf)
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("cmd.Run: %w", err)
 	}
 
-	return string(output), nil
+	return stdoutBuf.String(), nil
 }
