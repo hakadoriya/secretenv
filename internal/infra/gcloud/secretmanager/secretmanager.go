@@ -21,9 +21,11 @@ type (
 	Option interface {
 		apply(c *client)
 	}
+	//nolint:unused
 	optionFunc func(c *client)
 )
 
+//nolint:unused
 func (f optionFunc) apply(c *client) { f(c) }
 
 var _ infra.Client = (*client)(nil)
