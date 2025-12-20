@@ -14,21 +14,36 @@ import (
 
 const DefaultVersion = "AWSCURRENT"
 
-type client struct {
-	client *secretsmanager.Client
-}
+type (
+	client struct {
+		client *secretsmanager.Client
+	}
+	Option interface {
+		apply(c *client)
+	}
+	optionFunc func(c *client)
+)
+
+func (f optionFunc) apply(c *client) { f(c) }
 
 var _ infra.Client = (*client)(nil)
 
-func New(ctx context.Context) (infra.Client, error) {
+func New(ctx context.Context, opts ...Option) (infra.Client, error) {
+	c := &client{
+		client: nil,
+	}
+	for _, opt := range opts {
+		opt.apply(c)
+	}
+
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("config.LoadDefaultConfig: %w", err)
 	}
 
-	c := secretsmanager.NewFromConfig(cfg)
+	c.client = secretsmanager.NewFromConfig(cfg)
 
-	return &client{client: c}, nil
+	return c, nil
 }
 
 func (c *client) GetSecretStringValue(ctx context.Context, key string, opts ...infra.GetSecretStringValueOption) (value string, err error) {
