@@ -14,6 +14,7 @@ import (
 	"github.com/hakadoriya/secretenv/internal/infra/executor"
 	"github.com/hakadoriya/secretenv/internal/infra/gcloud/secretmanager"
 	opsecret "github.com/hakadoriya/secretenv/internal/infra/onepassword/secret"
+	"github.com/hakadoriya/secretenv/internal/infra/shell/stdout"
 	"github.com/hakadoriya/secretenv/pkg/errors"
 )
 
@@ -127,6 +128,11 @@ func execFunc(e executor.Executor) func(cmd *cliz.Command, args []string) error 
 			secretClient, err = opsecret.New(ctx)
 			if err != nil {
 				return fmt.Errorf("provider=%s: secret.New: %w", provider, err)
+			}
+		case "shell", "sh":
+			secretClient, err = stdout.New(ctx)
+			if err != nil {
+				return fmt.Errorf("provider=%s: stdout.New: %w", provider, err)
 			}
 		default:
 			return fmt.Errorf("provider=%s: %w", provider, errors.ErrUnknownProvider)
