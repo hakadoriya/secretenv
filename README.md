@@ -65,13 +65,14 @@ secretenv -- <command> [args...]
 # Using command-line options
 secretenv --provider aws --secret my-app-secrets -- ./myapp
 
+# Specifying a version
+secretenv --provider aws --secret my-app-secrets --secret-version AWSCURRENT -- ./myapp
+
 # Using environment variables
 export SECRETENV_PROVIDER=aws
 export SECRETENV_SECRET=my-app-secrets
+export SECRETENV_SECRET_VERSION=AWSCURRENT
 secretenv -- ./myapp arg1 arg2
-
-# Specifying a version
-secretenv --provider aws --secret my-app-secrets --secret-version AWSCURRENT -- ./myapp
 ```
 
 #### Dockerfile Example
@@ -82,13 +83,19 @@ FROM alpine:latest
 # Install secretenv
 COPY secretenv /usr/local/bin/secretenv
 
-# Set environment variables
-ENV SECRETENV_PROVIDER=aws
-ENV SECRETENV_SECRET=my-app-secrets
-
 # Run application with secretenv
 ENTRYPOINT ["secretenv", "--"]
 CMD ["./myapp"]
+```
+
+At run time, pass the environment variables to the container.
+
+```bash
+docker run -it --rm \
+  -e SECRETENV_PROVIDER=aws \
+  -e SECRETENV_SECRET=my-app-secrets \
+  -e SECRETENV_SECRET_VERSION=AWSCURRENT \
+  myapp
 ```
 
 ## Supported Providers
