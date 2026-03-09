@@ -92,7 +92,7 @@ jobs:
           make versenv
       # NOTE: enable docker compose layer cache ->
       - name: Set up Buildx for docker build cache
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - name: Use docker build cache
         uses: actions/cache/restore@v5
         id: restore-cache
