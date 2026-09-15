@@ -8,11 +8,14 @@ linters:
     - cyclop # unnecessary
     - depguard # unnecessary
     - dupl # unnecessary
+    - exhaustruct # NOTE: deprecated since golangci-lint v2.13.0 and replaced by exhaustruct_v5. Disabled to suppress the deprecation warning.
+    - exhaustruct_v5 # NOTE: it reports struct literals of external packages (cliz.Command, secretsmanager.GetSecretValueInput, etc.) whenever the upstream adds a field, so it is not maintainable.
     - funlen # unnecessary
     - gocognit # unnecessary
     - goconst # unnecessary
     - godot # unnecessary
     - godox # unnecessary
+    - gomodguard # NOTE: deprecated since golangci-lint v2.12.0 and replaced by gomodguard_v2. Disabled to suppress the deprecation warning.
     - interfacebloat # unnecessary
     - ireturn # NOTE: too many false positives and negatives occur frequently, causing the --fix option to malfunction. So it is disabled.
     - lll # unnecessary
@@ -31,7 +34,9 @@ linters:
       ignore-sigs:
         - func errors.New(text string) error
         - func fmt.Errorf(format string, a ...any) error
+        - func fmt.Errorf(format string, a ...any) (err error)
         - func fmt.Errorf(format string, a ...interface{}) error
+        - func fmt.Errorf(format string, a ...interface{}) (err error)
         - func github.com/hakadoriya/z.go/errorz.Errorf(format string, a ...interface{}) error
         - func (context.Context).Err() error
   exclusions:
@@ -49,7 +54,6 @@ linters:
           - dupl
           - dupword
           - err113
-          - exhaustruct
           - funlen
           - gochecknoglobals
           - gocognit
