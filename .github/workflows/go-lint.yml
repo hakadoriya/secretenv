@@ -41,6 +41,7 @@ jobs:
             # If any of these regular expressions match, it returns skip=false
             # This setting takes precedence over paths-ignore
             ^.github/workflows/go-lint.yml$
+            ^\.golangci\.[a-z]+$
             ^.*go\.[a-z\.]+$
             ^.*\.go$
   # > Note: A job that is skipped will report its status as "Success".
