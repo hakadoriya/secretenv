@@ -34,7 +34,7 @@ jobs:
     outputs:
       skip: ${{ steps.paths-filter.outputs.skip }}
     steps:
-      - uses: hakadoriya-actions/paths-filter-alternative@v1.0.1
+      - uses: hakadoriya-actions/paths-filter-alternative@v1.0.2
         id: paths-filter
         with:
           paths: |-
@@ -54,7 +54,7 @@ jobs:
       id-token: write
       contents: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.ref }} # needed for gh pr view
       - name: DEBUG
@@ -71,7 +71,7 @@ jobs:
           ================================================================
           DEBUG_DOC
       - name: actions/cache for versenv
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/versenv
@@ -95,7 +95,7 @@ jobs:
           # Setup versenv
           direnv allow ${{ env.WORKDIR }}
           make versenv
-      - uses: actions/setup-go@v6 # ref. https://github.com/actions/setup-go#usage
+      - uses: actions/setup-go@v7 # ref. https://github.com/actions/setup-go#usage
         id: setup-go
         with:
           cache: false
@@ -107,7 +107,7 @@ jobs:
           echo "GOVERSION=$(go version | cut -d' ' -f3)" >> "$GITHUB_OUTPUT"
           echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
       - name: actions/cache for go
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             ~/go/pkg/mod
